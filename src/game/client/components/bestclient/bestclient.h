@@ -46,6 +46,15 @@ class CBestClient : public CComponent
 	bool m_SavesNotifySchedule = false;
 	int64_t m_SavesNotifyDeadline = 0;
 
+	int64_t m_LagNotifyLastPingSample = 0;
+	int64_t m_LagNotifyLastNotify = 0;
+	int64_t m_LagNotifyLastPosTime = 0;
+	int m_LagNotifyLastPing = -1;
+	int m_LagNotifyLastLocalId = -1;
+	float m_LagNotifyPingAverage = 0.0f;
+	vec2 m_LagNotifyLastPos = vec2(0.0f, 0.0f);
+	bool m_LagNotifyPosValid = false;
+
 	std::shared_ptr<IHttpRequest> m_pFindHoursTask;
 	char m_aFindHoursPlayer[MAX_NAME_LENGTH]{};
 
@@ -55,6 +64,9 @@ class CBestClient : public CComponent
 
 	void UpdateFindHours();
 	void ResetFindHours();
+	void UpdateLagNotify();
+	void NotifyLag();
+	bool IsLagNotifyTeleport(vec2 From, vec2 To) const;
 	static void SaveUiThemeFileCallback(IConfigManager *pConfigManager, void *pUserData);
 
 public:

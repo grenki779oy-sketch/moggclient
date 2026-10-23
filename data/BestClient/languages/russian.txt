@@ -1191,6 +1191,10 @@ Notify about saves on map
 == Уведомлять о сейвах на карте
 
 [BestClient]
+Lag notification
+== Уведомление о лаге
+
+[BestClient]
 Twitch Chat
 == Твич-чат
 

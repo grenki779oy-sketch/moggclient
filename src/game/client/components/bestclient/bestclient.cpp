@@ -45,6 +45,13 @@
 
 static const int FROZEN_SKIN_MAX_DARKEN = 70;
 
+static constexpr int LAG_NOTIFY_PING_INTERVAL_MS = 250;
+static constexpr int LAG_NOTIFY_COOLDOWN_MS = 3000;
+static constexpr int LAG_NOTIFY_MAX_SNAP_GAP_MS = 250;
+static constexpr int LAG_NOTIFY_MIN_PING = 50;
+static constexpr int LAG_NOTIFY_PING_JUMP = 20;
+static constexpr float LAG_NOTIFY_SNAP_DISTANCE = 220.0f;
+
 #if defined(CONF_FAMILY_WINDOWS)
 extern "C" __declspec(dllimport) int __stdcall CloseHandle(void *Handle);
 #endif
@@ -299,10 +306,99 @@ void CBestClient::OnMapLoad()
 	CChatQoL::ClearSavesChatOnMapChange(GameClient());
 	m_SavesNotifySchedule = true;
 	m_SavesNotifyDeadline = 0;
+	m_LagNotifyPosValid = false;
+	m_LagNotifyLastPosTime = 0;
+	m_LagNotifyLastLocalId = -1;
+}
+
+bool CBestClient::IsLagNotifyTeleport(vec2 From, vec2 To) const
+{
+	if(!Collision() || !Collision()->Layers())
+		return false;
+
+	for(int Step = 0; Step <= 8; ++Step)
+	{
+		const vec2 Pos = mix(From, To, Step / 8.0f);
+		const int Index = Collision()->GetMapIndex(Pos);
+		if(Collision()->IsTeleport(Index) || Collision()->IsEvilTeleport(Index) ||
+			Collision()->IsTeleportHook(Index) || Collision()->IsTeleportWeapon(Index))
+			return true;
+	}
+	return false;
+}
+
+void CBestClient::NotifyLag()
+{
+	m_LagNotifyLastNotify = time_get();
+	GameClient()->m_Chat.Echo("lag");
+}
+
+void CBestClient::UpdateLagNotify()
+{
+	const int64_t Now = time_get();
+	const int64_t PingInterval = time_freq() * LAG_NOTIFY_PING_INTERVAL_MS / 1000;
+	const int64_t Cooldown = time_freq() * LAG_NOTIFY_COOLDOWN_MS / 1000;
+	const int64_t MaxSnapGap = time_freq() * LAG_NOTIFY_MAX_SNAP_GAP_MS / 1000;
+
+	if(!g_Config.m_BcLagNotify || Client()->State() != IClient::STATE_ONLINE ||
+		!GameClient()->m_Snap.m_pLocalInfo || !GameClient()->m_Snap.m_pLocalCharacter)
+	{
+		m_LagNotifyLastPing = -1;
+		m_LagNotifyPingAverage = 0.0f;
+		m_LagNotifyPosValid = false;
+		return;
+	}
+
+	const int Latency = std::clamp(GameClient()->m_Snap.m_pLocalInfo->m_Latency, 0, 999);
+	if(m_LagNotifyLastPing < 0)
+	{
+		m_LagNotifyLastPing = Latency;
+		m_LagNotifyLastPingSample = Now;
+		m_LagNotifyPingAverage = (float)Latency;
+	}
+	else if(Now - m_LagNotifyLastPingSample >= PingInterval)
+	{
+		m_LagNotifyLastPingSample = Now;
+		const bool PingSpike = m_LagNotifyLastPing > 0 &&
+			Latency >= LAG_NOTIFY_MIN_PING &&
+			Latency >= m_LagNotifyLastPing + LAG_NOTIFY_PING_JUMP &&
+			Latency >= (int)m_LagNotifyPingAverage + LAG_NOTIFY_PING_JUMP;
+		m_LagNotifyPingAverage = m_LagNotifyPingAverage * 0.8f + (float)Latency * 0.2f;
+		m_LagNotifyLastPing = Latency;
+		if(PingSpike && Now - m_LagNotifyLastNotify >= Cooldown)
+			NotifyLag();
+	}
+
+	const int LocalId = GameClient()->m_Snap.m_LocalClientId;
+	if(LocalId < 0 || LocalId >= MAX_CLIENTS || GameClient()->m_Snap.m_pLocalCharacter->m_Health <= 0)
+	{
+		m_LagNotifyPosValid = false;
+		return;
+	}
+
+	if(LocalId != m_LagNotifyLastLocalId)
+	{
+		m_LagNotifyLastLocalId = LocalId;
+		m_LagNotifyPosValid = false;
+	}
+
+	const vec2 Pos = GameClient()->m_aClients[LocalId].m_Predicted.m_Pos;
+	if(m_LagNotifyPosValid && Now - m_LagNotifyLastPosTime <= MaxSnapGap)
+	{
+		const bool Snapped = distance(Pos, m_LagNotifyLastPos) >= LAG_NOTIFY_SNAP_DISTANCE;
+		if(Snapped && !IsLagNotifyTeleport(m_LagNotifyLastPos, Pos) &&
+			Now - m_LagNotifyLastNotify >= Cooldown)
+			NotifyLag();
+	}
+
+	m_LagNotifyLastPos = Pos;
+	m_LagNotifyLastPosTime = Now;
+	m_LagNotifyPosValid = true;
 }
 
 void CBestClient::OnUpdate()
 {
+	UpdateLagNotify();
 	UpdateFindHours();
 
 	if(!g_Config.m_BcNotifySavesOnMap || Client()->State() == IClient::STATE_DEMOPLAYBACK)
@@ -334,6 +430,9 @@ void CBestClient::OnShutdown()
 	m_MenuMediaBackground.Shutdown();
 	m_SavesNotifySchedule = false;
 	m_SavesNotifyDeadline = 0;
+	m_LagNotifyLastPing = -1;
+	m_LagNotifyPingAverage = 0.0f;
+	m_LagNotifyPosValid = false;
 }
 
 void CBestClient::OnReset()
@@ -350,6 +449,9 @@ void CBestClient::OnReset()
 	m_SpecMovedNotifyTime = -999.0f;
 	if(!m_SavesNotifySchedule)
 		m_SavesNotifyDeadline = 0;
+	m_LagNotifyLastPing = -1;
+	m_LagNotifyPingAverage = 0.0f;
+	m_LagNotifyPosValid = false;
 }
 
 void CBestClient::OnClientNameChanged(int ClientId, const char *pNewName, const char *pNewClan)

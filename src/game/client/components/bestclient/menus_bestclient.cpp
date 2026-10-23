@@ -4096,7 +4096,7 @@ void CMenus::RenderSettingsBestClientOthers(CUIRect MainView)
 	Column.HSplitTop(10.0f, nullptr, &Column);
 	RightColumn.HSplitTop(10.0f, nullptr, &RightColumn);
 
-	const float ChatQoLBlockHeight = LineSize + MarginSmall + 5.0f * LineSize;
+	const float ChatQoLBlockHeight = LineSize + MarginSmall + 6.0f * LineSize;
 	CUIRect ChatQoLBlock;
 	Column.HSplitTop(ChatQoLBlockHeight, &ChatQoLBlock, &Column);
 
@@ -4129,6 +4129,11 @@ void CMenus::RenderSettingsBestClientOthers(CUIRect MainView)
 		CUIRect NotifySavesRow;
 		ChatQoLBlock.HSplitTop(LineSize, &NotifySavesRow, &ChatQoLBlock);
 		DoButton_CheckBoxAutoVMarginAndSet(&g_Config.m_BcNotifySavesOnMap, BcLocalize("Notify about saves on map"), &g_Config.m_BcNotifySavesOnMap, &NotifySavesRow, LineSize);
+	}
+	{
+		CUIRect LagNotifyRow;
+		ChatQoLBlock.HSplitTop(LineSize, &LagNotifyRow, &ChatQoLBlock);
+		DoButton_CheckBoxAutoVMarginAndSet(&g_Config.m_BcLagNotify, BcLocalize("Lag notification"), &g_Config.m_BcLagNotify, &LagNotifyRow, LineSize);
 	}
 
 	Column.HSplitTop(MarginBetweenViews, nullptr, &Column);

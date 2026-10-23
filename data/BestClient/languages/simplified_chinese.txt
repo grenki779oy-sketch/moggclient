@@ -1187,6 +1187,10 @@ Notify about saves on map
 == 地图存档通知
 
 [BestClient]
+Lag notification
+== 延迟通知
+
+[BestClient]
 Twitch Chat
 == Twitch 聊天
 

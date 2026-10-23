@@ -247,6 +247,7 @@
 	{"Commands in other layout", SETTINGS_NAV_LEAF_BC_OTHERS, "Chat QoL", &g_Config.m_BcChatAltCommandLayout, nullptr},
 	{"Reply/copy message menu", SETTINGS_NAV_LEAF_BC_OTHERS, "Chat QoL", &g_Config.m_BcChatMessageActions, nullptr},
 	{"Notify about saves on map", SETTINGS_NAV_LEAF_BC_OTHERS, "Chat QoL", &g_Config.m_BcNotifySavesOnMap, nullptr},
+	{"Lag notification", SETTINGS_NAV_LEAF_BC_OTHERS, "Chat QoL", &g_Config.m_BcLagNotify, nullptr},
 
 	{"Twitch Chat", SETTINGS_NAV_LEAF_BC_OTHERS, "Others", &g_Config.m_BcTwitchChatNick, nullptr},
 

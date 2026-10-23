@@ -19,6 +19,7 @@ MACRO_CONFIG_INT(BcSilentTyping, bc_silent_typing, 0, 0, 1, CFGFLAG_CLIENT | CFG
 MACRO_CONFIG_INT(BcChatAltCommandLayout, bc_chat_alt_command_layout, 0, 0, 1, CFGFLAG_CLIENT | CFGFLAG_SAVE, "Interpret slash chat commands typed in the Russian keyboard layout")
 MACRO_CONFIG_INT(BcChatMessageActions, bc_chat_message_actions, 1, 0, 1, CFGFLAG_CLIENT | CFGFLAG_SAVE, "Enable reply/copy message menu on chat messages")
 MACRO_CONFIG_INT(BcNotifySavesOnMap, bc_notify_saves_on_map, 1, 0, 1, CFGFLAG_CLIENT | CFGFLAG_SAVE, "Notify in chat when the current map has team saves")
+MACRO_CONFIG_INT(BcLagNotify, bc_lag_notify, 0, 0, 1, CFGFLAG_CLIENT | CFGFLAG_SAVE, "Notify in chat when ping spikes or your tee snaps due to lag")
 
 // Chat Filter
 MACRO_CONFIG_INT(BcChatOnlyTagsAndWhispers, bc_chat_only_tags_and_whispers, 0, 0, 1, CFGFLAG_CLIENT | CFGFLAG_SAVE, "Show only highlighted and private chat messages")
